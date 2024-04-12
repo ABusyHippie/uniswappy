@@ -4,6 +4,8 @@
 
 from dataclasses import dataclass
 from ...math.model import TokenDeltaModel
+from dotenv import load_dotenv
+import os
 
 DEFAULT_CHAIN_NM = "api.0x.org"
 DEFAULT_BUY_TKN_NM = "WETH"
@@ -19,6 +21,13 @@ DEFAULT_GAMMA_SCALE = 1
 DEFAULT_MAX_TRADE_PERCENT = 0.003
 DEFAULT_API_KEY = "6cbf2275-5cee-4659-8d67-5491399a9c5e"
 DEFAULT_API_SELL_AMOUNT = '10000000'
+
+load_dotenv() # load environment vars
+
+API_KEY: str = os.getenv('PREMIUM_API_KEY')
+if not API_KEY:
+    API_KEY = DEFAULT_API_KEY
+    # raise ValueError(f"API Key is not set in .env file. API Key: {API_KEY}") # for debugging
 
 @dataclass
 class Chain0x:
@@ -58,7 +67,7 @@ class Chain0x:
     time_window: float = DEFAULT_TIME_WINDOW
     trade_bias: float = DEFAULT_TRADE_BIAS 
     init_investment: float = DEFAULT_INIT_INVESTMENT 
-    api_key: float = DEFAULT_API_KEY
+    api_key: float = API_KEY
     api_sell_amount: str = DEFAULT_API_SELL_AMOUNT
     
     def get_api_key(self) -> str:

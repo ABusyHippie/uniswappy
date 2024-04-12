@@ -9,11 +9,23 @@ from uniswappy import *
 import time
 from datetime import datetime
 from supabase import create_client, Client
+from dotenv import load_dotenv
+import os
 
 
 # -------------------
 # Initial Variables
 # -------------------
+
+# load environment vars
+load_dotenv()
+
+# supabase config
+url: str = 'https://spndptiohsbomrpxbkag.supabase.co'
+key: str = os.getenv('SUPABASE_KEY')
+if not key:
+    raise ValueError("Supabase Key is not set in .env file.")
+supabase: Client = create_client(url, key)
 
 # Theme styles
 curdoc().theme = 'dark_minimal'
@@ -174,6 +186,28 @@ sim = QuantTerminal(buy_token = chain.get_buy_token(),
 # -------------------
 # Functions
 # -------------------
+
+# User Authentication functions
+def sign_up(email, password):
+    # Create a new user
+    user, error = supabase.auth.sign_up(email, password)
+    if error:
+        return {'error': str(error)}
+    return {'user': user}
+
+def sign_in(email, password):
+    # Sign in existing user
+    user, error = supabase.auth.sign_in(email=email, password=password)
+    if error:
+        return {'error': str(error)}
+    return {'user': user}
+
+def check_user():
+    # Check current user session
+    user = supabase.auth.user()
+    if user:
+        return {'user': user}
+    return {'error': 'No user logged in'}
 
 # Dark/Light mode button
 def switch_theme(event):

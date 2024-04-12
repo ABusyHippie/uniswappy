@@ -8,6 +8,7 @@ from bokeh.layouts import gridplot, column, row, layout
 from uniswappy import *
 import time
 from datetime import datetime
+from supabase import create_client, Client
 
 
 # -------------------

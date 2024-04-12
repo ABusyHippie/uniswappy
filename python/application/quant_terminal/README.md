@@ -35,11 +35,11 @@ Once the process is running, you need to kill it and restart to apply new change
 First check what the process ID is for the port you're running on (default is 5006):
 ```
 > lsof -ti:5006
-> ``` 
+``` 
 Then kill that process (pid is the output of the previous command)
 ```
 > kill -9 pid
-> ``` 
+``` 
 
 ## DeFiPy ETHDenver BUIDL week additions
 * **[QuantTerminal.py](https://github.com/defipy-devs/uniswappy/blob/ethdenver/python/prod/simulate/QuantTerminal.py)**:

@@ -3,7 +3,7 @@
 # Email: defipy.devs@gmail.com
 
 from bokeh.plotting import figure, curdoc, show
-from bokeh.models import ColumnDataSource, Button, Spacer, FuncTickFormatter, Select, GridPlot, Div, Styles, Slider, NumericInput, TextInput
+from bokeh.models import ColumnDataSource, Button, Spacer, FuncTickFormatter, Select, GridPlot, Div, Styles, Slider, NumericInput, TextInput, PasswordInput
 from bokeh.layouts import gridplot, column, row, layout
 from uniswappy import *
 import time
@@ -168,10 +168,9 @@ slider_instructions = Div(text='After adjusting values in this row press this bu
 profit_token = Div(text=f'Profitability of Pool in {token}: {x_profit}', styles=dark_style_smaller)
 profit_stable = Div(text=f'Profitability of Pool in {stable}: ${y_profit}', styles=dark_style_smaller)
 
-# login elements
+# login elements (button defined below in "Button" section)
 email_input = TextInput(title="Email:")
-password_input = TextInput(title="Password:", css_classes=['password-input'])
-login_button = Button(label="Login", button_type="success")
+password_input = PasswordInput(title="Password:")
 message_div = Div(text="Please login", styles=dark_style_smallest)
 
 # -------------------
@@ -197,17 +196,20 @@ sim = QuantTerminal(buy_token = chain.get_buy_token(),
 # User Authentication functions
 def sign_up(email, password):
     # Create a new user
-    user, error = supabase.auth.sign_up(email, password)
-    if error:
-        return {'error': str(error)}
-    return {'user': user}
+    try: 
+        user = supabase.auth.sign_up({"email": email, "password": password})
+        return {'user': user}
+    except Exception as e:
+        return {'error': str(e)}
 
 def sign_in(email, password):
     # Sign in existing user
-    user, error = supabase.auth.sign_in(email=email, password=password)
-    if error:
-        return {'error': str(error)}
-    return {'user': user}
+    try: 
+        user = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        return {'user': user}
+    except Exception as e:
+        return {'error': str(e)}
+
 
 def check_user():
     # Check current user session
@@ -218,21 +220,45 @@ def check_user():
 
 def login_callback(event):
     global login_status
-
     if login_status:
-        login_button.label = "Login"  # Update button label
-        login_button.button_type = "success"
-        print("Logged Out")
+        # Handle logout
+        try:
+            res = supabase.auth.sign_out()
+            message = "Logged Out"
+            login_button.label = "Login/Sign Up"
+            login_button.button_type = "success"
+        except Exception as e:
+            message = "Logout failed: " + str(e)
+        
+        message_div.text = message
+        login_status = False  # Update status to logged out
     else:
-        user_info = sign_in(email_input.value, password_input.value)
-        if 'error' in user_info:
-            message_div.text = f"Login failed: {user_info['error']}"
+        # Attempt to sign up
+        response = sign_up(email_input.value, password_input.value)
+        
+        if 'error' in response:
+            if "already registered" in response['error']:
+                # If already registered, attempt to log in
+                response = sign_in(email_input.value, password_input.value)
+                if 'error' in response:
+                    message_div.text = f"Login failed: {response['error']}"
+                    login_status = False
+                else:
+                    message_div.text = "Login Successful"
+                    login_button.label = "Logout"
+                    login_button.button_type = "danger"
+                    login_status = True
+            else:
+                # Handle other signup errors
+                message_div.text = f"Login failed: {response['error']}"
+                login_status = False
         else:
-            message_div.text = "Login successful"
-        login_button.label = "Logout"  # Update button label
-        login_button.button_type = "danger"
-    
-    login_status = not login_status  # Toggle the state
+            # If signup successful, update UI accordingly
+            message_div.text = "Signup Successful"
+            login_button.label = "Logout"
+            login_button.button_type = "danger"
+            login_status = True
+
 
 # Dark/Light mode button
 def switch_theme(event):
@@ -502,7 +528,7 @@ toggle_button = Button(label="Light Mode", button_type="default", width=200)
 toggle_button.on_click(switch_theme)
 
 # Create the login button
-login_button = Button(label="Login", button_type="success", width=200)
+login_button = Button(label="Login/Sign Up", button_type="success", width=200)
 login_button.on_click(login_callback)
 
 # Create chain selection dropdown
@@ -537,9 +563,6 @@ position_box.styles=dark_style_smallest
 # add refresh button for sliders
 refresh_button = Button(label="Apply Settings", button_type="primary", width=200)
 refresh_button.on_click(refresh_sim)
-
-# login button action
-login_button.on_click(login_callback)
 
 # Define UI on top  of screen
 button_row = row(init_button, select_chain, select_token, select_stable, Spacer(width_policy='max'), profit_token, instructions, Spacer(width_policy='max'), toggle_button, sizing_mode='stretch_width', styles=dark_style) 

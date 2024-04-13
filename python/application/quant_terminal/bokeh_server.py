@@ -3,7 +3,7 @@
 # Email: defipy.devs@gmail.com
 
 from bokeh.plotting import figure, curdoc, show
-from bokeh.models import ColumnDataSource, Button, Spacer, FuncTickFormatter, Select, GridPlot, Div, Styles, Slider, NumericInput
+from bokeh.models import ColumnDataSource, Button, Spacer, FuncTickFormatter, Select, GridPlot, Div, Styles, Slider, NumericInput, TextInput
 from bokeh.layouts import gridplot, column, row, layout
 from uniswappy import *
 import time
@@ -168,12 +168,19 @@ slider_instructions = Div(text='After adjusting values in this row press this bu
 profit_token = Div(text=f'Profitability of Pool in {token}: {x_profit}', styles=dark_style_smaller)
 profit_stable = Div(text=f'Profitability of Pool in {stable}: ${y_profit}', styles=dark_style_smaller)
 
+# login elements
+email_input = TextInput(title="Email:")
+password_input = TextInput(title="Password:", css_classes=['password-input'])
+login_button = Button(label="Login", button_type="success")
+message_div = Div(text="Please login", styles=dark_style_smallest)
+
 # -------------------
 # QuantTerminal
 # -------------------
 
 init = False
 callback_id = None
+login_status = False
 
 # sim = QuantTerminal() # default mode
 sim = QuantTerminal(buy_token = chain.get_buy_token(),
@@ -209,6 +216,24 @@ def check_user():
         return {'user': user}
     return {'error': 'No user logged in'}
 
+def login_callback(event):
+    global login_status
+
+    if login_status:
+        login_button.label = "Login"  # Update button label
+        login_button.button_type = "success"
+        print("Logged Out")
+    else:
+        user_info = sign_in(email_input.value, password_input.value)
+        if 'error' in user_info:
+            message_div.text = f"Login failed: {user_info['error']}"
+        else:
+            message_div.text = "Login successful"
+        login_button.label = "Logout"  # Update button label
+        login_button.button_type = "danger"
+    
+    login_status = not login_status  # Toggle the state
+
 # Dark/Light mode button
 def switch_theme(event):
     global current_theme_is_dark, instructions, button_row, slider_row, bias_slider, percent_slider, slider_instructions, profit_token, profit_stable, position_box, slider0, slider1
@@ -230,6 +255,8 @@ def switch_theme(event):
         position_box.styles=light_style_smallest
         slider0.styles=light_style_text
         slider1.styles=light_style_text
+        message_div.styles=light_style_smallest
+        login_row.styles=light_style
     else:
         curdoc().theme = 'dark_minimal'
         new_theme = 'dark_minimal'
@@ -246,7 +273,8 @@ def switch_theme(event):
         position_box.styles=dark_style_smallest
         slider0.styles=dark_style_text
         slider1.styles=dark_style_text
-    
+        message_div.styles=dark_style_smallest
+        login_row.styles=dark_style
     # Toggle the flag
     current_theme_is_dark = not current_theme_is_dark
 
@@ -473,6 +501,10 @@ init_button.on_click(initialize_sim)
 toggle_button = Button(label="Light Mode", button_type="default", width=200)
 toggle_button.on_click(switch_theme)
 
+# Create the login button
+login_button = Button(label="Login", button_type="success", width=200)
+login_button.on_click(login_callback)
+
 # Create chain selection dropdown
 select_chain = Select(title="Choose Network (Default ETH Mainnet):", value="ETHEREUM", options=["ETHEREUM", "AVALANCHE", "POLYGON"])
 select_chain.on_change('value', chain_selection)
@@ -506,9 +538,13 @@ position_box.styles=dark_style_smallest
 refresh_button = Button(label="Apply Settings", button_type="primary", width=200)
 refresh_button.on_click(refresh_sim)
 
+# login button action
+login_button.on_click(login_callback)
+
 # Define UI on top  of screen
 button_row = row(init_button, select_chain, select_token, select_stable, Spacer(width_policy='max'), profit_token, instructions, Spacer(width_policy='max'), toggle_button, sizing_mode='stretch_width', styles=dark_style) 
 slider_row = row(slider0, bias_slider, slider1, percent_slider, position_box, profit_stable, Spacer(width_policy='max'), slider_instructions, Spacer(width_policy='max'), refresh_button, sizing_mode='stretch_width', styles=dark_style)
+login_row = row(message_div, email_input, password_input, login_button, Spacer(width_policy='max'), styles=dark_style)
 
 # -------------------
 # Initialize Chart Data
@@ -527,6 +563,7 @@ initiate_charts()
 # -------------------
 
 # add elements to UI
+curdoc().add_root(login_row)
 curdoc().add_root(button_row)
 curdoc().add_root(slider_row)
 curdoc().add_root(grid)

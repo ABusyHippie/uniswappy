@@ -224,13 +224,14 @@ def login_callback(event):
         # Handle logout
         try:
             res = supabase.auth.sign_out()
-            message = "Logged Out"
+            message_div.text = "Logged Out"
+            message_div.styles = {'color': 'green', 'font-size': '16px', 'display': "flex", 'justify_content': "center", 'align_items': "center", 'height': "50px", 'text_align': "center", }
             login_button.label = "Login/Sign Up"
             login_button.button_type = "success"
         except Exception as e:
-            message = "Logout failed: " + str(e)
+            message_div.text = "Logout failed: " + str(e)
+            message_div.styles = {'color': 'red', 'font-size': '16px', 'display': "flex", 'justify_content': "center", 'align_items': "center", 'height': "50px", 'text_align': "center", }
         
-        message_div.text = message
         login_status = False  # Update status to logged out
     else:
         # Attempt to sign up
@@ -242,22 +243,27 @@ def login_callback(event):
                 response = sign_in(email_input.value, password_input.value)
                 if 'error' in response:
                     message_div.text = f"Login failed: {response['error']}"
+                    message_div.styles = {'color': 'red', 'font-size': '16px', 'display': "flex", 'justify_content': "center", 'align_items': "center", 'height': "50px", 'text_align': "center", }
                     login_status = False
                 else:
                     message_div.text = "Login Successful"
+                    message_div.styles = {'color': 'green', 'font-size': '16px', 'display': "flex", 'justify_content': "center", 'align_items': "center", 'height': "50px", 'text_align': "center", }
                     login_button.label = "Logout"
                     login_button.button_type = "danger"
                     login_status = True
             else:
                 # Handle other signup errors
                 message_div.text = f"Login failed: {response['error']}"
+                message_div.styles = {'color': 'red', 'font-size': '16px', 'display': "flex", 'justify_content': "center", 'align_items': "center", 'height': "50px", 'text_align': "center", }
                 login_status = False
         else:
             # If signup successful, update UI accordingly
             message_div.text = "Signup Successful"
+            message_div.styles = {'color': 'green', 'font-size': '16px', 'display': "flex", 'justify_content': "center", 'align_items': "center", 'height': "50px", 'text_align': "center", }
             login_button.label = "Logout"
             login_button.button_type = "danger"
             login_status = True
+
 
 
 # Dark/Light mode button
@@ -567,7 +573,7 @@ refresh_button.on_click(refresh_sim)
 # Define UI on top  of screen
 button_row = row(init_button, select_chain, select_token, select_stable, Spacer(width_policy='max'), profit_token, instructions, Spacer(width_policy='max'), toggle_button, sizing_mode='stretch_width', styles=dark_style) 
 slider_row = row(slider0, bias_slider, slider1, percent_slider, position_box, profit_stable, Spacer(width_policy='max'), slider_instructions, Spacer(width_policy='max'), refresh_button, sizing_mode='stretch_width', styles=dark_style)
-login_row = row(message_div, email_input, password_input, login_button, Spacer(width_policy='max'), styles=dark_style)
+login_row = row(email_input, password_input, login_button, message_div, Spacer(width_policy='max'), styles=dark_style)
 
 # -------------------
 # Initialize Chart Data
